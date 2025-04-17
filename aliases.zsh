@@ -1,5 +1,5 @@
 # git aliases
-alias pull='git pull --verbose'
+alias pull='git pull --rebase --autostash --verbose'
 alias push='git push --verbose'
 alias undo='git reset --soft HEAD~1'
 
