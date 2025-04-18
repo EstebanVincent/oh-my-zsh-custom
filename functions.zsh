@@ -27,6 +27,15 @@ function rbin() {
   git rebase "$source_branch" --verbose
 }
 
+function mrin() {
+  local source_branch="$(git_current_branch)"
+  local target_branch="${1:-develop}"
+  local remote="${2:-origin}"
+
+  git checkout "$target_branch" &&
+  pull "$remote" "$target_branch" &&
+  git merge "$source_branch" --no-ff --verbose
+}
 
 function gcnv() {
   git commit --verbose --message "$1" --no-verify
