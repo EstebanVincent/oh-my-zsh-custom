@@ -23,7 +23,7 @@ function rbin() {
   local remote="${2:-origin}"
 
   git checkout "$target_branch" &&
-  pull "$remote" "$target_branch" &&
+  git pull "$remote" "$target_branch" --rebase --autostash --verbose &&
   git rebase "$source_branch" --verbose
 }
 
@@ -33,7 +33,7 @@ function mrin() {
   local remote="${2:-origin}"
 
   git checkout "$target_branch" &&
-  pull "$remote" "$target_branch" &&
+  git pull "$remote" "$target_branch" --rebase --autostash --verbose &&
   git merge "$source_branch" --no-ff --verbose
 }
 
