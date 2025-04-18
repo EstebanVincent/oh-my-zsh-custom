@@ -4,6 +4,7 @@ alias commit='git commit -m'
 alias pull='git pull --rebase --autostash --verbose'
 alias push='git push --verbose'
 alias undo='git reset --soft HEAD~1'
+alias del='git branch -D'
 
 # Docker aliases
 alias up='docker compose up'
