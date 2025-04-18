@@ -17,6 +17,17 @@ function pushup() {
   git push --set-upstream "$remote" "$(git_current_branch)" --verbose
 }
 
+function rbin() {
+  local source_branch="$(git_current_branch)"
+  local target_branch="${1:-develop}"
+  local remote="${2:-origin}"
+
+  git checkout "$target_branch" &&
+  pull "$remote" "$target_branch" &&
+  git rebase "$source_branch" --verbose
+}
+
+
 function gcnv() {
   git commit --verbose --message "$1" --no-verify
 }
