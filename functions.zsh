@@ -27,6 +27,17 @@ function rbin() {
   git rebase "$source_branch" --verbose
 }
 
+function rbinup() {
+  local source_branch="$(git_current_branch)"
+  local target_branch="${1:-develop}"
+  local remote="${2:-origin}"
+
+  git checkout "$target_branch" &&
+  git pull "$remote" "$target_branch" --rebase --autostash --verbose &&
+  git rebase "$source_branch" --verbose
+  pushup "$remote"
+}
+
 function mrin() {
   local source_branch="$(git_current_branch)"
   local target_branch="${1:-develop}"
@@ -37,9 +48,21 @@ function mrin() {
   git merge "$source_branch" --no-ff --verbose
 }
 
-function gcnv() {
-  git commit --verbose --message "$1" --no-verify
+function mrinup() {
+  local source_branch="$(git_current_branch)"
+  local target_branch="${1:-develop}"
+  local remote="${2:-origin}"
+
+  git checkout "$target_branch" &&
+  git pull "$remote" "$target_branch" --rebase --autostash --verbose &&
+  git merge "$source_branch" --no-ff --verbose
+  pushup "$remote"
 }
+
+# Need to be logged in to Azure CLI with permissions to access the Key Vault
+# Activate venv and execute the script
+# pull the values from the Key Vault and export them to an env file while switching - to _
+# Deactivate venv
 
 function kv2env() {
   local kv_name="$1"
