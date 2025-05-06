@@ -5,7 +5,7 @@
 # 3. Configuring zle (Zsh Line Editor) to integrate the search results with the current command line
 # 4. Setting options to display search results with syntax highlighting
 function fuzzysearch() {
-  BUFFER=$(history | fzf --tac --reverse | sed 's/ *[0-9]* *//')
+  BUFFER=$(history | fzf --tac --reverse | sed -E 's/^ *[0-9]+ +[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2} +//')
   CURSOR=$#BUFFER
   zle redisplay
 }
