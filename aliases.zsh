@@ -12,6 +12,10 @@ alias swd='git switch $(git_develop_branch)'
 alias swm='git switch $(git_main_branch)'
 alias swc='git switch --create'
 
+alias stash='git stash push --include-untracked --message'
+alias stashl='git stash list'
+alias stashp='git stash pop'
+alias stashs='git stash show -p'
 
 # Docker aliases
 alias up='docker compose up'
