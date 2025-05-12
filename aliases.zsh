@@ -7,6 +7,12 @@ alias push='git push --verbose'
 alias undo='git reset --soft HEAD~1'
 alias del='git branch -D'
 
+alias sw='git switch'
+alias swd='git switch $(git_develop_branch)'
+alias swm='git switch $(git_main_branch)'
+alias swc='git switch --create'
+
+
 # Docker aliases
 alias up='docker compose up'
 alias upb='docker compose up --build'
