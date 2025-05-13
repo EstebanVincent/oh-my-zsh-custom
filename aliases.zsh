@@ -31,3 +31,4 @@ alias pir='pip install --upgrade pip && pip install -r requirements.txt'
 
 # Other
 alias c='clear'
+alias ssha='ssh-add ~/.ssh/id_rsa'
