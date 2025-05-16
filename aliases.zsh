@@ -7,6 +7,7 @@ alias push='git push --verbose'
 alias undo='git reset --soft HEAD~1'
 alias del='git branch -D'
 alias diff='git diff --stat'
+alias log='git log --stat'
 
 alias sw='git switch'
 alias swd='git switch $(git_develop_branch)'
