@@ -68,7 +68,7 @@ function kv2env() {
   local kv_name="$1"
   local env_file="${2:-$kv_name.env}"
   local script_path="/Users/esvi/Library/CloudStorage/OneDrive-Professional/Chanel/DevOps/LabCh/Common/scripts/azure/kv_secrets_to_env.py"
-  local venv_path="$HOME/Documents/MyEnvs/cha-common-scripts"
+  local venv_path="$HOME/PythonVenvs/cha-common-scripts"
 
   if [[ -z "$kv_name" ]]; then
     echo "Usage: kv2env <key_vault_name> [env_file]"
@@ -85,7 +85,7 @@ function kv2env() {
   deactivate
 }
 
-# Create a new virtual environment in ~/Documents/MyEnvs
+# Create a new virtual environment in ~/PythonVenvs
 # Usage: mkv <name> [python_version]
 # Defaults: python_version=3.12
 
@@ -98,14 +98,14 @@ function mkv() {
     return 1
   fi
 
-  local venvpath="$HOME/Documents/MyEnvs/${name}"
+  local venvpath="$HOME/PythonVenvs/${name}"
 
   if [[ -d "$venvpath" ]]; then
     echo "Error: Virtual environment '$name' already exists at '$venvpath'" >&2
     return 1
   fi
 
-  mkdir -p "$HOME/Documents/MyEnvs"
+  mkdir -p "$HOME/PythonVenvs"
   if ! "python$py_version" -m venv "$venvpath"; then
     echo "Error: Failed to create virtualenv using python$py_version" >&2
     return 1
