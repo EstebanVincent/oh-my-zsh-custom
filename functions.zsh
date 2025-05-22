@@ -98,12 +98,10 @@ function mkv() {
     return 1
   fi
 
-  local version_prefix="${py_version//./}"  # 3.12 → 312
-  local final_name="${version_prefix}-${name}-venv"
-  local venvpath="$HOME/Documents/MyEnvs/$final_name"
+  local venvpath="$HOME/Documents/MyEnvs/${name}"
 
   if [[ -d "$venvpath" ]]; then
-    echo "Error: Virtual environment '$final_name' already exists at '$venvpath'" >&2
+    echo "Error: Virtual environment '$name' already exists at '$venvpath'" >&2
     return 1
   fi
 
