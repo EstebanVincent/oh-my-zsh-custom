@@ -68,7 +68,7 @@ function kv2env() {
   local kv_name="$1"
   local env_file="${2:-$kv_name.env}"
   local script_path="/Users/esvi/Library/CloudStorage/OneDrive-Professional/Chanel/DevOps/LabCh/Common/scripts/azure/kv_secrets_to_env.py"
-  local venv_path="$HOME/Documents/MyEnvs/scripts-env"
+  local venv_path="$HOME/Documents/MyEnvs/cha-common-scripts"
 
   if [[ -z "$kv_name" ]]; then
     echo "Usage: kv2env <key_vault_name> [env_file]"
