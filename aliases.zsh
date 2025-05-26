@@ -28,7 +28,7 @@ alias azl='az login'
 
 # Python aliases
 
-alias pi= 'pip install --upgrade pip && pip install'
+alias pi='pip install --upgrade pip && pip install "$@"'
 alias pir='pip install --upgrade pip && pip install --upgrade -r requirements.txt'
 alias pire='pip install --upgrade pip && pip install --upgrade -r requirements.txt --extra-index-url https://${ACCESS_TOKEN_NAME}:${ACCESS_TOKEN_SECRET}@pkgs.dev.azure.com/LabCh/_packaging/innovation/pypi/simple/'
 
