@@ -2,6 +2,8 @@
 alias add='git add . && git status'
 alias commit='git commit --verbose --message'
 alias commitnv='git commit --verbose --no-verify --message'
+alias fetch='git fetch --verbose'
+alias fetchp='git fetch --prune --verbose'
 alias pull='git pull --rebase --autostash --verbose'
 alias push='git push --verbose'
 alias undo='git reset --soft HEAD~1'
