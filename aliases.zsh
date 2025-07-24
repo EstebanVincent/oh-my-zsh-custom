@@ -37,6 +37,7 @@ alias pire='pip install --upgrade pip && pip install --upgrade -r requirements.t
 
 # UV aliases
 alias uvs='uv sync --active --extra dev'
+alias uvr='uv run --active'
 
 # Other
 alias c='clear'
