@@ -144,3 +144,95 @@ function mkuv() {
   echo "Created venv at '$venvpath'"
   source "$venvpath/bin/activate"
 }
+
+# Build and push Docker image to Azure Container Registry
+# Usage: dbuild <image_name> [acr_name]
+
+function dbuild() {
+  local image_name="$1"
+  local acr_name="$2"
+
+  if [[ -z "$image_name" ]]; then
+    echo "Usage: acr_push <image_name> [acr_name]" >&2
+    return 1
+  fi
+
+  local timestamp=$(date +%Y%m%d-%H%M%S)
+
+  if [[ -z "$acr_name" ]]; then
+    echo "Building Docker image locally: $image_name"
+    if ! docker build --platform linux/amd64 -t "$image_name" .; then
+      echo "Error: Failed to build Docker image" >&2
+      return 1
+    fi
+    echo "No ACR name provided - image built locally only"
+    echo "Local image: $image_name"
+    return 0
+  fi
+
+  echo "Building Docker image for ACR: $image_name"
+  if ! docker build -t "$image_name" .; then
+    echo "Error: Failed to build Docker image" >&2
+    return 1
+  fi
+
+  local acr_url="${acr_name}.azurecr.io"
+
+  echo "Tagging image with timestamp: $timestamp"
+  docker tag "$image_name" "${acr_url}/${image_name}:${timestamp}"
+
+  echo "Tagging image as latest"
+  docker tag "$image_name" "${acr_url}/${image_name}:latest"
+
+  echo "Logging into ACR: $acr_name"
+  if ! az acr login --name "$acr_name"; then
+    echo "Error: Failed to login to ACR" >&2
+    return 1
+  fi
+
+  echo "Pushing timestamped image"
+  if ! docker push "${acr_url}/${image_name}:${timestamp}"; then
+    echo "Error: Failed to push timestamped image" >&2
+    return 1
+  fi
+
+  echo "Pushing latest image"
+  if ! docker push "${acr_url}/${image_name}:latest"; then
+    echo "Error: Failed to push latest image" >&2
+    return 1
+  fi
+
+  echo "Successfully pushed $image_name to $acr_name"
+  echo "Tags: ${timestamp}, latest"
+}
+
+# Run Docker container with optional arguments
+# Usage: drun <image_name> [additional_docker_args...]
+
+function drun() {
+  local image_name="$1"
+  shift
+
+  if [[ -z "$image_name" ]]; then
+    echo "Usage: drun <image_name> [additional_docker_args...]" >&2
+    echo "Examples:" >&2
+    echo "  drun myapp" >&2
+    echo "  drun myapp -p 8080:8080" >&2
+    echo "  drun myapp -p 3000:3000 -v \$(pwd):/app" >&2
+    return 1
+  fi
+
+  local container_name="${image_name}-container"
+  
+  echo "Running Docker container: $container_name from image: $image_name"
+  
+  if [[ -f ".env" ]]; then
+    echo "Found .env file - including environment variables"
+    docker run --rm -it --env-file .env --name "$container_name" "$@" "$image_name"
+  else
+    echo "No .env file found - running without environment file"
+    docker run --rm -it --name "$container_name" "$@" "$image_name"
+  fi
+}
+
+
