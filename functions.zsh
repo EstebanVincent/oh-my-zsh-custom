@@ -145,30 +145,39 @@ function mkuv() {
   source "$venvpath/bin/activate"
 }
 
-# Build and push Docker image to Azure Container Registry
-# Usage: dbuild <image_name> [acr_name]
+# Build Docker image locally
+# Usage: dbuild <image_name>
 
 function dbuild() {
   local image_name="$1"
-  local acr_name="$2"
 
   if [[ -z "$image_name" ]]; then
-    echo "Usage: acr_push <image_name> [acr_name]" >&2
+    echo "Usage: dbuild <image_name>" >&2
+    return 1
+  fi
+
+  echo "Building Docker image locally: $image_name"
+  if ! docker build --platform linux/amd64 -t "$image_name" .; then
+    echo "Error: Failed to build Docker image" >&2
+    return 1
+  fi
+  
+  echo "Successfully built local image: $image_name"
+}
+
+# Build and push Docker image to Azure Container Registry
+# Usage: dacr <image_name> <acr_name>
+
+function dacr() {
+  local image_name="$1"
+  local acr_name="$2"
+
+  if [[ -z "$image_name" || -z "$acr_name" ]]; then
+    echo "Usage: dacr <image_name> <acr_name>" >&2
     return 1
   fi
 
   local timestamp=$(date +%Y%m%d-%H%M%S)
-
-  if [[ -z "$acr_name" ]]; then
-    echo "Building Docker image locally: $image_name"
-    if ! docker build --platform linux/amd64 -t "$image_name" .; then
-      echo "Error: Failed to build Docker image" >&2
-      return 1
-    fi
-    echo "No ACR name provided - image built locally only"
-    echo "Local image: $image_name"
-    return 0
-  fi
 
   echo "Building Docker image for ACR: $image_name"
   if ! docker build -t "$image_name" .; then
