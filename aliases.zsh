@@ -24,6 +24,8 @@ alias stashs='git stash show -p'
 # Docker aliases
 alias up='docker compose up'
 alias upb='docker compose up --build'
+alias dbp='docker builder prune -f'
+alias dip='docker image prune -f'
 
 # Azure aliases
 alias azl='az login'
