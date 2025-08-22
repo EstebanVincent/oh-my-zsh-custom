@@ -30,6 +30,13 @@ alias dip='docker image prune -f'
 # Azure aliases
 alias azl='az login'
 
+# kubectl aliases
+alias k='kubectl'
+alias kgp='kubectl get pods'
+alias kga='kubectl get all'
+alias kdp='kubectl describe pod'
+alias kex='kubectl exec -it'
+
 # Pip aliases
 alias pi='pip install --upgrade pip && pip install "$@"'
 alias pir='pip install --upgrade pip && pip install --upgrade -r requirements.txt'
