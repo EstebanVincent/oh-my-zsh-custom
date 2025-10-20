@@ -156,14 +156,26 @@ function dbuild() {
     return 1
   fi
 
-  echo "Building Docker image locally: $image_name"
-  if ! docker build --platform linux/amd64 -t "$image_name" .; then
-    echo "Error: Failed to build Docker image" >&2
+  # Auto-detect platform
+  local platform
+  if [[ "$(uname -m)" == "arm64" || "$(uname -m)" == "aarch64" ]]; then
+    platform="linux/arm64"
+  else
+    platform="linux/amd64"
+  fi
+
+  echo "Detected platform: $platform"
+
+  echo "Building Docker image for $platform: $image_name"
+  if ! docker build --platform "$platform" -t "$image_name" .; then
+    echo "Error: Failed to build image for $platform" >&2
     return 1
   fi
-  
+
   echo "Successfully built local image: $image_name"
 }
+
+
 
 # Build and push Docker image to Azure Container Registry
 # Usage: dacr <image_name> <acr_name>
@@ -177,21 +189,12 @@ function dacr() {
     return 1
   fi
 
-  local timestamp=$(date +%Y%m%d-%H%M%S)
-
-  echo "Building Docker image for ACR: $image_name"
-  if ! docker build -t "$image_name" .; then
-    echo "Error: Failed to build Docker image" >&2
-    return 1
-  fi
+  local timestamp
+  timestamp=$(date +%Y%m%d-%H%M%S)
 
   local acr_url="${acr_name}.azurecr.io"
-
-  echo "Tagging image with timestamp: $timestamp"
-  docker tag "$image_name" "${acr_url}/${image_name}:${timestamp}"
-
-  echo "Tagging image as latest"
-  docker tag "$image_name" "${acr_url}/${image_name}:latest"
+  local full_image_timestamp="${acr_url}/${image_name}:${timestamp}"
+  local full_image_latest="${acr_url}/${image_name}:latest"
 
   echo "Logging into ACR: $acr_name"
   if ! az acr login --name "$acr_name"; then
@@ -199,21 +202,17 @@ function dacr() {
     return 1
   fi
 
-  echo "Pushing timestamped image"
-  if ! docker push "${acr_url}/${image_name}:${timestamp}"; then
-    echo "Error: Failed to push timestamped image" >&2
+  echo "Building and pushing multi-platform Docker image for ACR: $image_name"
+  if ! docker buildx build --platform linux/amd64,linux/arm64 \
+      -t "$full_image_timestamp" -t "$full_image_latest" --push .; then
+    echo "Error: Failed to buildx build and push multi-platform image" >&2
     return 1
   fi
 
-  echo "Pushing latest image"
-  if ! docker push "${acr_url}/${image_name}:latest"; then
-    echo "Error: Failed to push latest image" >&2
-    return 1
-  fi
-
-  echo "Successfully pushed $image_name to $acr_name"
-  echo "Tags: ${timestamp}, latest"
+  echo "Successfully built and pushed $image_name to $acr_name"
+  echo "Tags: $timestamp, latest"
 }
+
 
 # Run Docker container with optional arguments
 # Usage: drun <image_name> [additional_docker_args...]
@@ -233,14 +232,22 @@ function drun() {
 
   local container_name="${image_name}-container"
   
-  echo "Running Docker container: $container_name from image: $image_name"
+  # Auto-detect platform
+  local platform
+  if [[ "$(uname -m)" == "arm64" ]]; then
+    platform="linux/arm64"
+  else
+    platform="linux/amd64"
+  fi
+  
+  echo "Running Docker container: $container_name from image: $image_name (platform: $platform)"
   
   if [[ -f ".env" ]]; then
     echo "Found .env file - including environment variables"
-    docker run --rm -it --env-file .env --name "$container_name" "$@" "$image_name"
+    docker run --rm -it --platform "$platform" --env-file .env --name "$container_name" "$@" "$image_name"
   else
     echo "No .env file found - running without environment file"
-    docker run --rm -it --name "$container_name" "$@" "$image_name"
+    docker run --rm -it --platform "$platform" --name "$container_name" "$@" "$image_name"
   fi
 }
 
