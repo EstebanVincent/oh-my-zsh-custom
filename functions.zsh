@@ -251,4 +251,18 @@ function drun() {
   fi
 }
 
+# Execute bash in a running Docker container
+# Usage: dex <container_id_or_name>
+
+function dex() {
+  local container="$1"
+
+  if [[ -z "$container" ]]; then
+    echo "Usage: dex <container_id_or_name>" >&2
+    return 1
+  fi
+
+  docker exec -it "$container" /bin/bash
+}
+
 
