@@ -37,6 +37,13 @@ alias kga='kubectl get all'
 alias kdp='kubectl describe pod'
 alias kex='kubectl exec -it'
 
+# Terraform aliases
+alias tf='terraform'
+alias tfi='terraform init'
+alias tfp='terraform plan'
+alias tfa='terraform apply'
+alias tfd='terraform destroy'
+
 # Pip aliases
 alias pi='pip install --upgrade pip && pip install "$@"'
 alias pir='pip install --upgrade pip && pip install --upgrade -r requirements.txt'
