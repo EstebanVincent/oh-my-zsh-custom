@@ -304,26 +304,4 @@ function tfa() {
   fi
 }
 
-# Show Terraform output as JSON
-# Usage: tfo [filename]
-# Defaults: filename=terraform.dev
-
-function tfo() {
-  if [[ -f "cli.tfplan" ]]; then
-    echo "Showing output from plan file: cli.tfplan"
-    terraform show -json cli.tfplan
-  else
-    local filename="${1:-terraform.dev}"
-    local varfile="${filename}.tfvars"
-
-    if [[ ! -f "$varfile" ]]; then
-      echo "Error: Variable file '$varfile' not found" >&2
-      return 1
-    fi
-
-    echo "Showing output with variable file: $varfile"
-    terraform output -json -var-file="$varfile"
-  fi
-}
-
 

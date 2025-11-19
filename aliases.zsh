@@ -43,6 +43,7 @@ alias kex='kubectl exec -it'
 alias tf='terraform'
 alias tfi='terraform init'
 alias tfd='terraform destroy'
+alias tfo='terraform output -json'
 
 # Pip aliases
 alias pi='pip install --upgrade pip && pip install "$@"'
