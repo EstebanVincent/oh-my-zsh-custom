@@ -42,8 +42,6 @@ alias kex='kubectl exec -it'
 # Terraform aliases
 alias tf='terraform'
 alias tfi='terraform init'
-alias tfp='terraform plan'
-alias tfa='terraform apply'
 alias tfd='terraform destroy'
 
 # Pip aliases
