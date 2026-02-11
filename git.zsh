@@ -69,3 +69,56 @@ function mrinup() {
   git merge "$source_branch" --no-ff --verbose
   pushup "$remote"
 }
+
+# Prune local branches with gone or missing upstream
+# Lists branches whose upstream was deleted ([gone]) and branches with no tracking at all
+# Prompts separately for each group before deleting
+# Usage: prunelocal
+
+function prunelocal() {
+  echo "Fetching and pruning..."
+  git fetch --prune -q
+
+  echo ""
+  echo "Branches with a \"[gone]\" upstream branch:"
+  echo "-----"
+  git for-each-ref --format '%(refname:short) %(upstream:track)' refs/heads/ | awk '$2 == "[gone]" {print $1}'
+  local gone=$(git for-each-ref --format '%(refname:short) %(upstream:track)' refs/heads/ | awk '$2 == "[gone]"' | wc -l)
+
+  echo ""
+  echo "Branches not tracking an upstream branch:"
+  echo "-----"
+  git for-each-ref --format '%(refname:short) %(upstream)' refs/heads/ | awk '$2 == "" {print $1}'
+  local nontracking=$(git for-each-ref --format '%(refname:short) %(upstream)' refs/heads/ | awk '$2 == ""' | wc -l)
+
+  echo ""
+
+  local remove_gone remove_local
+
+  if (( gone )); then
+    echo -n "Delete [gone] branches? (y/n) "
+    read remove_gone
+  fi
+
+  if (( nontracking )); then
+    echo -n "Delete branches w/out tracking? (y/n) "
+    read remove_local
+  fi
+
+  echo ""
+
+  if [[ "$remove_gone" == 'y' ]]; then
+    git for-each-ref --format '%(refname:short) %(upstream:track)' refs/heads/ | awk '$2 == "[gone]" {print $1}' | xargs git branch -D
+  elif (( gone )); then
+    echo "Skipping \"[gone]\" branches"
+    echo ""
+  fi
+
+  if [[ "$remove_local" == 'y' ]]; then
+    git for-each-ref --format '%(refname:short) %(upstream)' refs/heads/ | awk '$2 == "" {print $1}' | xargs git branch -D
+  elif (( nontracking )); then
+    echo "Skipping branches w/out tracking"
+  fi
+
+  echo "Done."
+}
