@@ -10,7 +10,7 @@ alias azl='az login'
 function kv2env() {
   local kv_name="$1"
   local env_file="${2:-$kv_name.env}"
-  local script_path="/Users/esvi/Library/CloudStorage/OneDrive-Professional/Chanel/DevOps/LabCh/Common/scripts/azure/kv_secrets_to_env.py"
+  local script_path="/Users/esvi/AzureDevOps/LabCh/Common/scripts/azure/kv_secrets_to_env.py"
   local venv_path="$HOME/PythonVenvs/cha-common-scripts"
 
   if [[ -z "$kv_name" ]]; then
