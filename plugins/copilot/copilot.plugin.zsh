@@ -71,12 +71,19 @@ function copilot-accept-line() {
             local _bin="${_COPILOT_BIN:-copilot}"
             local _out=$(mktemp)
             local _spin='⣾⣽⣻⢿⡿⣟⣯⣷'
-            local _prompt='Read `git diff --cached` then `git status`. Write a commit message in Conventional Commits format: `<type>(<scope>): <summary>` (≤50 chars, imperative mood, no trailing period). Add body only if why is non-obvious. Never restate filenames. Run `git commit -m "..."`. Never push.'
+            # Marker triggers the sessionStart hook which injects git diff/status as context
+            local _prompt='__CAVEMAN_COMMIT__ The staged diff and git status are in your context. Write a commit message: Conventional Commits `<type>(<scope>): <summary>` (≤50 chars, imperative, no period). Body only if why is non-obvious. Then run git commit. Never push.'
 
             "$_bin" \
-                --allow-tool='shell(git diff)' \
-                --allow-tool='shell(git status)' \
-                --allow-tool='shell(git commit)' \
+                --disable-builtin-mcps \
+                --no-ask-user \
+                --no-custom-instructions \
+                --silent \
+                --allow-tool='shell(git)' \
+                --deny-tool='shell(git push)' \
+                --deny-tool='shell(git fetch)' \
+                --deny-tool='shell(git pull)' \
+
                 -p "$_prompt" \
                 >|"$_out" 2>&1 &
             local _pid=$!
