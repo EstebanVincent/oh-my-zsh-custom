@@ -122,3 +122,99 @@ function prunelocal() {
 
   echo "Done."
 }
+
+# Gitflow functions
+# feature start <name> [remote]  — branch off develop
+# feature finish [name] [remote] — merge into develop, delete branch
+function feature() {
+  local cmd="$1"
+  local name="$2"
+  local remote="${3:-origin}"
+  case "$cmd" in
+    start)
+      [[ -z "$name" ]] && echo "Usage: feature start <name> [remote]" && return 1
+      git switch "$(git_develop_branch)" &&
+      git pull "$remote" "$(git_develop_branch)" --rebase --autostash --verbose &&
+      git switch --create "feature/$name"
+      ;;
+    finish)
+      local branch="${name:+feature/$name}"
+      local branch="${branch:-$(git_current_branch)}"
+      git push "$remote" "$branch" --verbose &&
+      az repos pr create --detect \
+        --source-branch "$branch" \
+        --target-branch "$(git_develop_branch)" \
+        --title "feat: $branch → $(git_develop_branch)" \
+        --open
+      ;;
+    *)
+      echo "Usage: feature <start|finish> [name] [remote]"
+      ;;
+  esac
+}
+
+# release start <version> [remote] — branch off develop
+# release finish <version> [remote] — merge into main + develop, tag, delete
+function release() {
+  local cmd="$1"
+  local version="$2"
+  local remote="${3:-origin}"
+  [[ -z "$version" ]] && echo "Usage: release <start|finish> <version> [remote]" && return 1
+  local branch="release/$version"
+  case "$cmd" in
+    start)
+      git switch "$(git_develop_branch)" &&
+      git pull "$remote" "$(git_develop_branch)" --rebase --autostash --verbose &&
+      git switch --create "$branch"
+      ;;
+    finish)
+      git push "$remote" "$branch" --verbose &&
+      az repos pr create --detect \
+        --source-branch "$branch" \
+        --target-branch "$(git_main_branch)" \
+        --title "release: $version → $(git_main_branch)" \
+        --open &&
+      az repos pr create --detect \
+        --source-branch "$branch" \
+        --target-branch "$(git_develop_branch)" \
+        --title "release: $version → $(git_develop_branch)" \
+        --open
+      ;;
+    *)
+      echo "Usage: release <start|finish> <version> [remote]"
+      ;;
+  esac
+}
+
+# hotfix start <name> [remote]  — branch off main
+# hotfix finish <name> [remote] — merge into main + develop, tag, delete
+function hotfix() {
+  local cmd="$1"
+  local name="$2"
+  local remote="${3:-origin}"
+  [[ -z "$name" ]] && echo "Usage: hotfix <start|finish> <name> [remote]" && return 1
+  local branch="hotfix/$name"
+  case "$cmd" in
+    start)
+      git switch "$(git_main_branch)" &&
+      git pull "$remote" "$(git_main_branch)" --rebase --autostash --verbose &&
+      git switch --create "$branch"
+      ;;
+    finish)
+      git push "$remote" "$branch" --verbose &&
+      az repos pr create --detect \
+        --source-branch "$branch" \
+        --target-branch "$(git_main_branch)" \
+        --title "hotfix: $name → $(git_main_branch)" \
+        --open &&
+      az repos pr create --detect \
+        --source-branch "$branch" \
+        --target-branch "$(git_develop_branch)" \
+        --title "hotfix: $name → $(git_develop_branch)" \
+        --open
+      ;;
+    *)
+      echo "Usage: hotfix <start|finish> <name> [remote]"
+      ;;
+  esac
+}
