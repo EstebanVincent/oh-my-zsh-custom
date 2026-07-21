@@ -123,6 +123,19 @@ function prunelocal() {
   echo "Done."
 }
 
+# Returns "--org https://dev.azure.com/ORG --project PROJECT --repository REPO" parsed from remote URL
+# Supports SSH aliases: devops-alias:v3/ORG/PROJECT/REPO
+# Usage: _az_pr_args [remote]
+function _az_pr_args() {
+  local remote="${1:-origin}"
+  local url org project repo
+  url=$(git remote get-url "$remote")
+  org=$(echo "$url"     | sed 's|.*v3/\([^/]*\)/.*|\1|')
+  project=$(echo "$url" | sed 's|.*v3/[^/]*/\([^/]*\)/.*|\1|')
+  repo=$(echo "$url"    | sed 's|.*v3/[^/]*/[^/]*/\([^/]*\)|\1|')
+  echo "--org https://dev.azure.com/$org --project $project --repository $repo"
+}
+
 # Gitflow functions
 # feature start <name> [remote]  — branch off develop
 # feature finish [name] [remote] — merge into develop, delete branch
@@ -141,7 +154,7 @@ function feature() {
       local branch="${name:+feature/$name}"
       local branch="${branch:-$(git_current_branch)}"
       git push "$remote" "$branch" --verbose &&
-      az repos pr create --detect \
+      az repos pr create $(_az_pr_args "$remote") \
         --source-branch "$branch" \
         --target-branch "$(git_develop_branch)" \
         --title "feat: $branch → $(git_develop_branch)" \
@@ -169,12 +182,12 @@ function release() {
       ;;
     finish)
       git push "$remote" "$branch" --verbose &&
-      az repos pr create --detect \
+      az repos pr create $(_az_pr_args "$remote") \
         --source-branch "$branch" \
         --target-branch "$(git_main_branch)" \
         --title "release: $version → $(git_main_branch)" \
         --open &&
-      az repos pr create --detect \
+      az repos pr create $(_az_pr_args "$remote") \
         --source-branch "$branch" \
         --target-branch "$(git_develop_branch)" \
         --title "release: $version → $(git_develop_branch)" \
@@ -202,12 +215,12 @@ function hotfix() {
       ;;
     finish)
       git push "$remote" "$branch" --verbose &&
-      az repos pr create --detect \
+      az repos pr create $(_az_pr_args "$remote") \
         --source-branch "$branch" \
         --target-branch "$(git_main_branch)" \
         --title "hotfix: $name → $(git_main_branch)" \
         --open &&
-      az repos pr create --detect \
+      az repos pr create $(_az_pr_args "$remote") \
         --source-branch "$branch" \
         --target-branch "$(git_develop_branch)" \
         --title "hotfix: $name → $(git_develop_branch)" \
