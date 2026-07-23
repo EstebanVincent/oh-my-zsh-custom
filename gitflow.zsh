@@ -51,7 +51,7 @@ function _gf_copilot_pr() {
       --target-branch "$target" \
       --title "$title" \
       --description "$description" \
-      --open
+      --open | jq -r '"PR #\(.pullRequestId): \(.title)\n\(.webUrl // .url)"'
   done
 }
 
