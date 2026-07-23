@@ -11,6 +11,50 @@ function _az_pr_args() {
   echo "--org https://dev.azure.com/$org --project $project --repository $repo"
 }
 
+# Use copilot CLI (--output-format json) to generate PR title+description,
+# then create PR(s) directly via az CLI.
+# Usage: _gf_copilot_pr <source-branch> <remote> <target-branch> [extra-target...]
+function _gf_copilot_pr() {
+  local source_branch="$1" remote="$2"
+  shift 2
+  local targets=("$@")
+  local az_args first_target raw json title description
+
+  az_args=$(_az_pr_args "$remote")
+  first_target="${targets[1]}"
+
+  raw=$("${_COPILOT_BIN:-copilot}" \
+    --disable-builtin-mcps \
+    --no-ask-user \
+    --no-custom-instructions \
+    --output-format json \
+    --model 'claude-sonnet-5' \
+    -p "Generate a PR title (conventional commits, ≤72 chars) and short markdown description for branch: $source_branch → $first_target. Output ONLY a JSON object: {\"title\": \"...\", \"description\": \"...\"}" 2>/dev/null)
+
+  # JSONL: final response lives in .data.content of "assistant.message" events
+  json=$(printf '%s' "$raw" | \
+    jq -r 'select(.type == "assistant.message") | .data.content' 2>/dev/null | \
+    grep '"title"' | tail -1)
+
+  title=$(printf '%s' "$json" | jq -r '.title' 2>/dev/null)
+  description=$(printf '%s' "$json" | jq -r '.description' 2>/dev/null)
+
+  if [[ -z "$title" || "$title" == "null" ]]; then
+    echo "[gf] copilot: failed to parse PR title — raw output:" >&2
+    printf '%s\n' "$raw" >&2
+    return 1
+  fi
+
+  for target in "${targets[@]}"; do
+    az repos pr create ${=az_args} \
+      --source-branch "$source_branch" \
+      --target-branch "$target" \
+      --title "$title" \
+      --description "$description" \
+      --open
+  done
+}
+
 # gff start <name> [remote]  — branch off develop
 # gff end [name] [remote] — merge into develop, delete branch
 function gff() {
@@ -28,11 +72,7 @@ function gff() {
       local branch="${name:+feature/$name}"
       local branch="${branch:-$(git_current_branch)}"
       git push "$remote" "$branch" --verbose &&
-      az repos pr create $(_az_pr_args "$remote") \
-        --source-branch "$branch" \
-        --target-branch "$(git_develop_branch)" \
-        --title "feature: $name → $(git_develop_branch)" \
-        --open
+      _gf_copilot_pr "$branch" "$remote" "$(git_develop_branch)"
       ;;
     *)
       echo "Usage: gff <start|end> [name] [remote]"
@@ -56,16 +96,7 @@ function gfr() {
       ;;
     end)
       git push "$remote" "$branch" --verbose &&
-      az repos pr create $(_az_pr_args "$remote") \
-        --source-branch "$branch" \
-        --target-branch "$(git_main_branch)" \
-        --title "release: $version → $(git_main_branch)" \
-        --open &&
-      az repos pr create $(_az_pr_args "$remote") \
-        --source-branch "$branch" \
-        --target-branch "$(git_develop_branch)" \
-        --title "release: $version → $(git_develop_branch)" \
-        --open
+      _gf_copilot_pr "$branch" "$remote" "$(git_main_branch)" "$(git_develop_branch)"
       ;;
     *)
       echo "Usage: release <start|end> <version> [remote]"
@@ -89,16 +120,7 @@ function gfh() {
       ;;
     end)
       git push "$remote" "$branch" --verbose &&
-      az repos pr create $(_az_pr_args "$remote") \
-        --source-branch "$branch" \
-        --target-branch "$(git_main_branch)" \
-        --title "hotfix: $name → $(git_main_branch)" \
-        --open &&
-      az repos pr create $(_az_pr_args "$remote") \
-        --source-branch "$branch" \
-        --target-branch "$(git_develop_branch)" \
-        --title "hotfix: $name → $(git_develop_branch)" \
-        --open
+      _gf_copilot_pr "$branch" "$remote" "$(git_main_branch)" "$(git_develop_branch)"
       ;;
     *)
       echo "Usage: gfh <start|end> <name> [remote]"
