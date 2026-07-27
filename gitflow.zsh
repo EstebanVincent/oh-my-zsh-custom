@@ -80,6 +80,31 @@ function gff() {
   esac
 }
 
+# gtf start <name> [remote]  — branch off main (trunk-based)
+# gtf end [name] [remote] — PR into main
+function gtf() {
+  local cmd="$1"
+  local name="$2"
+  local remote="${3:-origin}"
+  case "$cmd" in
+    start)
+      [[ -z "$name" ]] && echo "Usage: gtf start <name> [remote]" && return 1
+      git switch "$(git_main_branch)" &&
+      git pull "$remote" "$(git_main_branch)" --rebase --autostash --verbose &&
+      git switch --create "feature/$name"
+      ;;
+    end)
+      local branch="${name:+feature/$name}"
+      local branch="${branch:-$(git_current_branch)}"
+      git push "$remote" "$branch" --verbose &&
+      _gf_copilot_pr "$branch" "$remote" "$(git_main_branch)"
+      ;;
+    *)
+      echo "Usage: gtf <start|end> [name] [remote]"
+      ;;
+  esac
+}
+
 # gfr start <version> [remote] — branch off develop
 # gfr end <version> [remote] — merge into main + develop, tag, delete
 function gfr() {
