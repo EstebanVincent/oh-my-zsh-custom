@@ -28,7 +28,7 @@ function _gf_copilot_pr() {
     --no-ask-user \
     --no-custom-instructions \
     --output-format json \
-    --model 'claude-sonnet-5' \
+    --model 'claude-sonnet-5.5' \
     -p "Generate a PR title (conventional commits, ≤72 chars) and short markdown description for branch: $source_branch → $first_target. Output ONLY a JSON object: {\"title\": \"...\", \"description\": \"...\"}" 2>/dev/null)
 
   # JSONL: final response lives in .data.content of "assistant.message" events
