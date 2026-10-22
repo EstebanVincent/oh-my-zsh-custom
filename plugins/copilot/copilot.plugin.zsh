@@ -68,39 +68,20 @@ function copilot-accept-line() {
 
     case "$subcommand" in
         commit|c)
-            local _bin="${_COPILOT_BIN:-copilot}"
-            local _out=$(mktemp)
-            local _spin='⣾⣽⣻⢿⡿⣟⣯⣷'
-            # Marker triggers the sessionStart hook which injects git diff/status as context
-            local _prompt='__CAVEMAN_COMMIT__ The staged diff and git status are in your context. Write a commit message: Conventional Commits `<type>(<scope>): <summary>` (≤50 chars, imperative, no period). Body only if why is non-obvious. Then run git commit. Never push.'
+            # Marker triggers the sessionStart hook to inject git diff/status as context
+            local _prompt='__CAVEMAN_COMMIT__ The staged diff and git status are in your context. Write a commit message: Conventional Commits `<type>(<scope>): <summary>` (≤50 chars, imperative, no period). Body only if why is non-obvious. Then run git commit. Never push. Never add Co-authored-by'
 
-            "$_bin" \
+            _copilot_exec \
                 --disable-builtin-mcps \
                 --no-ask-user \
                 --no-custom-instructions \
                 --silent \
-                --allow-tool='shell(git)' \
+                --allow-tool='shell(git:*)' \
                 --deny-tool='shell(git push)' \
                 --deny-tool='shell(git fetch)' \
                 --deny-tool='shell(git pull)' \
-
-                -p "$_prompt" \
-                >|"$_out" 2>&1 &
-            local _pid=$!
-
-            # spinner
-            local i=0
-            tput civis 2>/dev/null
-            while kill -0 "$_pid" 2>/dev/null; do
-                i=$(( (i+1) % ${#_spin} ))
-                printf "  \e[33m%s\e[0m committing..." "${_spin:$i:1}"
-                sleep 0.1
-                printf "\r\033[K"
-            done
-            tput cnorm 2>/dev/null
-
-            cat "$_out"
-            rm -f "$_out"
+                --model 'claude-haiku-4.5' \
+                -p "$_prompt"
             ;;
         resume|r)
             if [[ -n "$prompt_text" ]]; then

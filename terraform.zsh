@@ -1,7 +1,6 @@
 # Terraform aliases
 alias tf='terraform'
 alias tfi='terraform init'
-alias tfd='terraform destroy'
 alias tfo='terraform output -json'
 
 # Terraform functions
@@ -43,4 +42,17 @@ function tfa() {
     echo "Applying Terraform with variable file: $varfile"
     terraform apply -var-file="$varfile"
   fi
+}
+
+function tfd() {
+  local filename="${1:-terraform.dev}"
+  local varfile="${filename}.tfvars"
+
+  if [[ ! -f "$varfile" ]]; then
+    echo "Error: Variable file '$varfile' not found" >&2
+    return 1
+  fi
+
+  echo "Destroying Terraform resources with variable file: $varfile"
+  terraform destroy -var-file="$varfile"
 }
