@@ -11,17 +11,31 @@ function _az_pr_args() {
   echo "--org https://dev.azure.com/$org --project $project --repository $repo"
 }
 
+# Returns "OWNER/REPO" parsed from a GitHub remote URL (https, ssh, or ssh alias)
+# Usage: _gh_repo [remote]
+function _gh_repo() {
+  local remote="${1:-origin}"
+  git remote get-url "$remote" | sed -e 's|\.git$||' -e 's|.*[:/]\([^/:]*/[^/:]*\)$|\1|'
+}
+
 # Use copilot CLI (--output-format json) to generate PR title+description,
-# then create PR(s) directly via az CLI.
+# then create PR(s) via gh (GitHub remotes) or az (Azure DevOps remotes).
 # Usage: _gf_copilot_pr <source-branch> <remote> <target-branch> [extra-target...]
 function _gf_copilot_pr() {
   local source_branch="$1" remote="$2"
   shift 2
   local targets=("$@")
-  local az_args first_target raw json title description
+  local first_target raw json title description is_github
 
-  az_args=$(_az_pr_args "$remote")
   first_target="${targets[1]}"
+  [[ "$(git remote get-url "$remote")" == *github* ]] && is_github=1
+
+  if [[ -n "$is_github" ]] && ! gh auth status --hostname github.com >/dev/null 2>&1; then
+    local answer
+    echo -n "[gf] Not logged in to GitHub CLI. Run 'gh auth login' now? (y/n) "
+    read answer
+    [[ "$answer" == 'y' ]] && gh auth login --hostname github.com || return 1
+  fi
 
   raw=$("${_COPILOT_BIN:-copilot}" \
     --disable-builtin-mcps \
@@ -45,6 +59,21 @@ function _gf_copilot_pr() {
     return 1
   fi
 
+  if [[ -n "$is_github" ]]; then
+    local gh_repo=$(_gh_repo "$remote") pr_url
+    for target in "${targets[@]}"; do
+      pr_url=$(gh pr create --repo "$gh_repo" \
+        --head "$source_branch" \
+        --base "$target" \
+        --title "$title" \
+        --body "$description") || continue
+      echo "$pr_url"
+      gh pr view "$pr_url" --web
+    done
+    return
+  fi
+
+  local az_args=$(_az_pr_args "$remote")
   for target in "${targets[@]}"; do
     az repos pr create ${=az_args} \
       --source-branch "$source_branch" \
